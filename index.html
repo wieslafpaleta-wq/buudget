@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>Budżet+ | Zarządzanie budżetem miesięcznym</title>
+  <meta name="description" content="Budżet+ — nowoczesna aplikacja PWA do codziennego śledzenia wydatków i budżetu miesięcznego." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#18181B" />
+  <meta name="background-color" content="#18181B" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Budżet+" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="assets/icons/favicon.png" />
+  <link rel="shortcut icon" href="assets/icons/favicon.png" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ APP SHELL ============ -->
+  <div class="app" id="app">
+
+    <!-- ===== TOP BAR ===== -->
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="topbar__logo" aria-hidden="true">🪙</span>
+        <span class="topbar__title">Budżet<span class="accent">+</span></span>
+      </div>
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="Przełącz tryb ciemny/jasny" title="Tryb ciemny/jasny">
+        <span id="themeIcon" aria-hidden="true">🌙</span>
+      </button>
+    </header>
+
+    <!-- ===== MAIN VIEWS ===== -->
+    <main class="views" id="views">
+
+      <!-- ---------- DASHBOARD ---------- -->
+      <section class="view view--active" id="view-dashboard" data-view="dashboard" aria-labelledby="dashboard-heading">
+
+        <p class="period-label" id="periodLabel">Sierpień 2026 · 01.08 – 31.08</p>
+
+        <div class="hero-card" id="heroCard">
+          <div class="hero-card__row">
+            <div>
+              <p class="hero-card__label">Pozostało do wydania 💸</p>
+              <h1 class="hero-card__amount" id="remainingAmount">0,00 zł</h1>
+            </div>
+            <span class="hero-card__coin" aria-hidden="true">💰</span>
+          </div>
+
+          <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+            <div class="progress__fill" id="progressFill"></div>
+          </div>
+          <div class="progress__meta">
+            <span id="progressPercent">0%</span>
+            <span id="progressOfTotal">z 800,00 zł</span>
+          </div>
+
+          <p class="period-banner hidden" id="periodBanner">
+            <span id="periodBannerIcon" aria-hidden="true">📅</span> <span id="periodBannerText"></span>
+          </p>
+
+          <p class="warning-banner hidden" id="warningBanner">
+            ⚠️ <span id="warningText">Przekroczono budżet miesięczny!</span>
+          </p>
+        </div>
+
+        <h2 class="section-heading" id="dashboard-heading">Podsumowanie</h2>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🏦</span>
+            <p class="stat-card__label">Budżet początkowy</p>
+            <p class="stat-card__value" id="statInitialBudget">800,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">💳</span>
+            <p class="stat-card__label">Wydano łącznie</p>
+            <p class="stat-card__value" id="statSpent">0,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">📅</span>
+            <p class="stat-card__label">Dni pozostało</p>
+            <p class="stat-card__value" id="statDaysLeft">31</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🎯</span>
+            <p class="stat-card__label">Dzisiejszy limit</p>
+            <p class="stat-card__value" id="statTodayLimit">0,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">📈</span>
+            <p class="stat-card__label">Śr. dzienny wydatek</p>
+            <p class="stat-card__value" id="statAvgDaily">0,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🪙</span>
+            <p class="stat-card__label">Wykorzystano</p>
+            <p class="stat-card__value" id="statPercentUsed">0%</p>
+          </div>
+        </div>
+
+        <h2 class="section-heading">Ostatnie wydatki</h2>
+        <div id="recentList" class="expense-list"></div>
+        <p class="empty-state hidden" id="recentEmpty">Brak wydatków — dodaj pierwszy! 🎉</p>
+
+      </section>
+
+      <!-- ---------- ADD EXPENSE ---------- -->
+      <section class="view" id="view-add" data-view="add" aria-labelledby="add-heading">
+        <h2 class="section-heading" id="add-heading">Dodaj wydatek 💸</h2>
+
+        <form id="expenseForm" class="card form" novalidate>
+          <input type="hidden" id="expenseId" value="" />
+
+          <label class="field">
+            <span class="field__label">Kwota (zł)</span>
+            <input type="number" id="fieldAmount" inputmode="decimal" step="0.01" min="0.01" placeholder="0,00" required />
+          </label>
+
+          <label class="field">
+            <span class="field__label">Opis</span>
+            <input type="text" id="fieldDescription" placeholder="np. Zakupy spożywcze" maxlength="80" required />
+          </label>
+
+          <fieldset class="field">
+            <legend class="field__label">Kategoria</legend>
+            <div class="category-picker" id="categoryPicker" role="radiogroup" aria-label="Kategoria wydatku"></div>
+          </fieldset>
+
+          <label class="field">
+            <span class="field__label">Data</span>
+            <input type="date" id="fieldDate" required />
+          </label>
+
+          <button type="submit" class="btn btn--primary btn--block" id="submitBtn">
+            <span aria-hidden="true">➕</span> Dodaj wydatek
+          </button>
+          <button type="button" class="btn btn--ghost btn--block hidden" id="cancelEditBtn">
+            Anuluj edycję
+          </button>
+        </form>
+      </section>
+
+      <!-- ---------- HISTORY ---------- -->
+      <section class="view" id="view-history" data-view="history" aria-labelledby="history-heading">
+        <h2 class="section-heading" id="history-heading">Historia wydatków 📜</h2>
+
+        <div class="card filters">
+          <label class="field">
+            <span class="field__label">Szukaj</span>
+            <input type="search" id="searchInput" placeholder="Szukaj po opisie..." />
+          </label>
+
+          <div class="filters__row">
+            <label class="field field--half">
+              <span class="field__label">Kategoria</span>
+              <select id="filterCategory">
+                <option value="">Wszystkie</option>
+              </select>
+            </label>
+            <label class="field field--half">
+              <span class="field__label">Data</span>
+              <input type="date" id="filterDate" />
+            </label>
+          </div>
+
+          <div class="filters__row">
+            <label class="field field--half">
+              <span class="field__label">Sortuj</span>
+              <select id="sortSelect">
+                <option value="newest">Od najnowszych</option>
+                <option value="oldest">Od najstarszych</option>
+                <option value="highest">Największa kwota</option>
+                <option value="lowest">Najmniejsza kwota</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn--ghost field--half" id="clearFiltersBtn">Wyczyść filtry</button>
+          </div>
+        </div>
+
+        <div id="historyList" class="expense-list"></div>
+        <p class="empty-state hidden" id="historyEmpty">Nic tu nie ma — zmień filtry albo dodaj wydatek 🔍</p>
+      </section>
+
+      <!-- ---------- STATS ---------- -->
+      <section class="view" id="view-stats" data-view="stats" aria-labelledby="stats-heading">
+        <h2 class="section-heading" id="stats-heading">Statystyki 📊</h2>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🧾</span>
+            <p class="stat-card__label">Liczba transakcji</p>
+            <p class="stat-card__value" id="statCount">0</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">⚖️</span>
+            <p class="stat-card__label">Średni wydatek</p>
+            <p class="stat-card__value" id="statAvg">0,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🔺</span>
+            <p class="stat-card__label">Największy wydatek</p>
+            <p class="stat-card__value" id="statMax">0,00 zł</p>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🔻</span>
+            <p class="stat-card__label">Najmniejszy wydatek</p>
+            <p class="stat-card__value" id="statMin">0,00 zł</p>
+          </div>
+        </div>
+
+        <h3 class="section-heading section-heading--sm">Wydatki według kategorii</h3>
+        <div class="card chart-card">
+          <canvas id="categoryChart" width="300" height="220" role="img" aria-label="Wykres wydatków według kategorii"></canvas>
+          <div id="chartLegend" class="chart-legend"></div>
+          <p class="empty-state hidden" id="chartEmpty">Dodaj wydatki, aby zobaczyć wykres 📈</p>
+        </div>
+      </section>
+
+      <!-- ---------- SETTINGS ---------- -->
+      <section class="view" id="view-settings" data-view="settings" aria-labelledby="settings-heading">
+        <h2 class="section-heading" id="settings-heading">Ustawienia ⚙️</h2>
+
+        <div class="card">
+          <h3 class="card__title">Budżet sierpniowy</h3>
+          <p class="card__hint">Okres budżetu jest stały — zawsze 1–31 sierpnia. Zmieniaj tylko rok, dla którego chcesz śledzić budżet.</p>
+          <label class="field">
+            <span class="field__label">Rok budżetu</span>
+            <input type="number" id="yearInput" min="2000" max="2100" step="1" inputmode="numeric" />
+          </label>
+          <label class="field">
+            <span class="field__label">Budżet miesięczny (zł)</span>
+            <input type="number" id="budgetInput" min="0" step="10" />
+          </label>
+          <button type="button" class="btn btn--primary btn--block" id="saveBudgetBtn">Zapisz ustawienia</button>
+          <p class="card__hint" id="periodRangeHint"></p>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title">Motyw</h3>
+          <div class="settings-row">
+            <span>Tryb ciemny</span>
+            <label class="switch">
+              <input type="checkbox" id="darkModeSwitch" />
+              <span class="switch__track"><span class="switch__thumb"></span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title">Dane</h3>
+          <p class="card__hint">Eksportuj kopię zapasową lub wczytaj dane z pliku.</p>
+          <div class="settings-actions">
+            <button type="button" class="btn btn--secondary" id="exportJsonBtn">⬇️ Eksport JSON</button>
+            <button type="button" class="btn btn--secondary" id="exportCsvBtn">⬇️ Eksport CSV</button>
+            <label class="btn btn--secondary" for="importFileInput">⬆️ Import JSON</label>
+            <input type="file" id="importFileInput" accept="application/json" class="visually-hidden" />
+          </div>
+          <button type="button" class="btn btn--danger btn--block" id="resetDataBtn">🗑️ Wyczyść wszystkie dane</button>
+        </div>
+
+        <div class="card card--about">
+          <p class="card__hint">Budżet+ v1.0.0 — Twoje dane są przechowywane wyłącznie lokalnie, na tym urządzeniu.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== BOTTOM NAVIGATION ===== -->
+    <nav class="bottom-nav" aria-label="Nawigacja główna">
+      <button class="bottom-nav__item bottom-nav__item--active" data-target="dashboard" type="button">
+        <span class="bottom-nav__icon" aria-hidden="true">🏠</span>
+        <span class="bottom-nav__label">Start</span>
+      </button>
+      <button class="bottom-nav__item" data-target="history" type="button">
+        <span class="bottom-nav__icon" aria-hidden="true">📜</span>
+        <span class="bottom-nav__label">Historia</span>
+      </button>
+      <button class="bottom-nav__item bottom-nav__item--fab" data-target="add" type="button" aria-label="Dodaj wydatek">
+        <span class="bottom-nav__fab" aria-hidden="true">➕</span>
+      </button>
+      <button class="bottom-nav__item" data-target="stats" type="button">
+        <span class="bottom-nav__icon" aria-hidden="true">📊</span>
+        <span class="bottom-nav__label">Statystyki</span>
+      </button>
+      <button class="bottom-nav__item" data-target="settings" type="button">
+        <span class="bottom-nav__icon" aria-hidden="true">⚙️</span>
+        <span class="bottom-nav__label">Ustawienia</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- ===== CONFIRM MODAL ===== -->
+  <div class="modal-overlay hidden" id="confirmOverlay">
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+      <h3 id="confirmTitle">Czy na pewno?</h3>
+      <p id="confirmMessage">Tej operacji nie można cofnąć.</p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="confirmCancelBtn">Anuluj</button>
+        <button type="button" class="btn btn--danger" id="confirmOkBtn">Potwierdź</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
